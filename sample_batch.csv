@@ -1,0 +1,14 @@
+sku,width,height,declared_width,declared_height,n_frames,name_confidence,v2_audit_flagged,source_missing,print_url_ratio,dpi
+ART-001,3600,2400,36,24,1,100,false,false,,300
+ART-002,2400,3600,24,36,1,100,false,false,,300
+ART-003,1500,3000,12,24,1,100,false,false,,300
+ART-004,3000,1500,24,12,1,100,false,false,,300
+ART-005,1000,3000,12,36,1,100,false,false,,300
+ART-006,3000,1000,36,12,1,100,false,false,,300
+ART-007,1500,3000,36,24,1,100,false,false,,300
+ART-008,2400,3400,24,36,1,100,false,false,,300
+ART-009,2400,3000,24,36,1,100,false,false,,300
+ART-010,2200,4000,24,36,1,100,false,false,,300
+ART-014,2400,3600,24,36,1,45,false,false,,300
+ART-015,2400,3600,24,36,3,100,false,false,,300
+ART-016,2400,3600,24,36,1,100,false,false,,150

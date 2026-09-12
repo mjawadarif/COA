@@ -1,0 +1,135 @@
+[
+  {
+    "sku": "ART-001",
+    "width": 3600,
+    "height": 2400,
+    "declared_width": 36,
+    "declared_height": 24,
+    "notes": "Canonical 3:2 landscape match (Delta = 1.5)"
+  },
+  {
+    "sku": "ART-002",
+    "width": 2400,
+    "height": 3600,
+    "declared_width": 24,
+    "declared_height": 36,
+    "notes": "Canonical 2:3 portrait match (Delta = 0.6667)"
+  },
+  {
+    "sku": "ART-003",
+    "width": 1500,
+    "height": 3000,
+    "declared_width": 12,
+    "declared_height": 24,
+    "notes": "Canonical 1:2 panel match (Delta = 0.5)"
+  },
+  {
+    "sku": "ART-004",
+    "width": 3000,
+    "height": 1500,
+    "declared_width": 24,
+    "declared_height": 12,
+    "notes": "Canonical 2:1 panorama match (Delta = 2.0)"
+  },
+  {
+    "sku": "ART-005",
+    "width": 1000,
+    "height": 3000,
+    "declared_width": 12,
+    "declared_height": 36,
+    "notes": "Canonical 1:3 vertical banner match (Delta = 0.3333)"
+  },
+  {
+    "sku": "ART-006",
+    "width": 3000,
+    "height": 1000,
+    "declared_width": 36,
+    "declared_height": 12,
+    "notes": "Canonical 3:1 panorama match (Delta = 3.0)"
+  },
+  {
+    "sku": "ART-007",
+    "width": 1500,
+    "height": 3000,
+    "declared_width": 36,
+    "declared_height": 24,
+    "notes": "1:2 source squeezed into 3:2 product (stretch)"
+  },
+  {
+    "sku": "ART-008",
+    "width": 2400,
+    "height": 3400,
+    "declared_width": 24,
+    "declared_height": 36,
+    "notes": "5.88% mismatch (Centre Crop)"
+  },
+  {
+    "sku": "ART-009",
+    "width": 2400,
+    "height": 3000,
+    "declared_width": 24,
+    "declared_height": 36,
+    "notes": "19.99% mismatch wider (Side Crop)"
+  },
+  {
+    "sku": "ART-010",
+    "width": 2200,
+    "height": 4000,
+    "declared_width": 24,
+    "declared_height": 36,
+    "notes": "17.5% mismatch taller (Vertical Crop)"
+  },
+  {
+    "sku": "ART-011",
+    "width": 2400,
+    "height": 3600,
+    "declared_width": 24,
+    "declared_height": 36,
+    "artwork_off_centre": true,
+    "notes": "Artwork placement off-centre (Recentre)"
+  },
+  {
+    "sku": "ART-012",
+    "width": 3000,
+    "height": 2000,
+    "declared_width": 24,
+    "declared_height": 36,
+    "crop_cuts_composition": true,
+    "notes": "Large mismatch, cropping cuts subject (AI Expand)"
+  },
+  {
+    "sku": "ART-013",
+    "width": 3000,
+    "height": 2000,
+    "declared_width": 24,
+    "declared_height": 36,
+    "notes": "Orientation flipped 3:2 to 2:3 (Re-ratio)"
+  },
+  {
+    "sku": "ART-014",
+    "width": 2400,
+    "height": 3600,
+    "declared_width": 24,
+    "declared_height": 36,
+    "name_confidence": 40,
+    "notes": "Low name confidence (Re-match source)"
+  },
+  {
+    "sku": "ART-015",
+    "width": 2400,
+    "height": 3600,
+    "declared_width": 24,
+    "declared_height": 36,
+    "n_frames": 3,
+    "notes": "Triptych set (Verify panels)"
+  },
+  {
+    "sku": "ART-016",
+    "width": 2400,
+    "height": 3600,
+    "declared_width": 24,
+    "declared_height": 36,
+    "dpi": 150,
+    "notes": "DPI 150 (DPI check)"
+  }
+]

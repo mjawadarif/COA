@@ -1,0 +1,19 @@
+{
+  "name": "image-alignment-protocol-tool",
+  "version": "1.0.0",
+  "description": "Image Alignment and Correction Protocol Specialist Web Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test_protocol.js"
+  },
+  "keywords": [
+    "image-alignment",
+    "aspect-ratio",
+    "correction-protocol",
+    "shopify-mockups",
+    "catalog-auditing"
+  ],
+  "author": "",
+  "license": "MIT"
+}

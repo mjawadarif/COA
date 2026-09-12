@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Inspector & Alignment Protocol — madebyJawadGenix</title>
+  
+  <!-- Inter & JetBrains Mono Fonts (Framer & MaxScanner Standard) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              slate950: '#020617',
+              slate900: '#0F172A',
+              slate800: '#1E293B',
+              slate700: '#334155',
+              slate600: '#475569',
+              slate500: '#64748B',
+              slate400: '#94A3B8',
+              slate200: '#E2E8F0',
+              slate100: '#F1F5F9',
+              slate50: '#F8FAFC',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen antialiased flex flex-col font-sans text-sm selection:bg-slate-900 selection:text-white">
+
+  <!-- Framer & MaxScanner Style Top Navigation -->
+  <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3.5 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Product Title -->
+      <div class="flex items-center space-x-3.5">
+        <div class="w-10 h-10 bg-[#0F172A] flex items-center justify-center text-white rounded-xl shadow-sm">
+          <i data-lucide="scan" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="font-bold text-lg tracking-tight text-slate-900">Image Inspector</h1>
+            <span class="text-[11px] font-semibold tracking-wide px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">Protocol Specialist</span>
+          </div>
+          <p class="text-xs text-slate-500 font-normal mt-0.5">
+            Remediation & Distortion Workbench • Built by <strong class="font-bold text-slate-900">madebyJawadGenix</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Studio Attribution & Framer Segmented Switcher -->
+      <div class="flex items-center gap-3">
+        <!-- Prominent madebyJawadGenix Studio Stamp -->
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs">
+          <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+          <span class="text-slate-500">Engineered by</span>
+          <strong class="font-bold text-slate-900">madebyJawadGenix</strong>
+        </div>
+
+        <!-- Framer Style Segmented Tab Controls -->
+        <div class="flex items-center border border-slate-200 bg-slate-100 p-1 rounded-xl">
+          <button id="tabSingle" class="flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold transition bg-[#0F172A] text-white rounded-lg shadow-sm">
+            <i data-lucide="scan-line" class="w-3.5 h-3.5"></i>
+            <span>Single Inspector</span>
+          </button>
+          <button id="tabBatch" class="flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium transition text-slate-600 hover:text-slate-900 rounded-lg">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            <span>Catalog Auditor</span>
+          </button>
+        </div>
+
+        <!-- Reset Everything Button -->
+        <button id="btnResetAll" title="Reset all inputs, image and parameters to defaults" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-xl shadow-xs">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Reset All</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
+
+    <!-- SINGLE IMAGE WORKBENCH VIEW -->
+    <div id="singleView" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Image Input & Parameters -->
+      <div class="lg:col-span-5 space-y-5">
+
+        <!-- Source Artwork Card (MaxScanner Dropzone Style) -->
+        <div class="matte-card p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="font-semibold text-slate-900 text-sm tracking-tight flex items-center gap-2">
+              <i data-lucide="image" class="w-4 h-4 text-slate-700"></i>
+              Source Artwork File
+            </h2>
+            <div class="flex items-center gap-2">
+              <button id="btnResetCard" type="button" title="Reset everything to default" class="text-xs font-medium text-slate-500 hover:text-rose-600 flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-slate-100 transition">
+                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                <span>Reset</span>
+              </button>
+              <span class="text-[11px] font-mono font-medium text-slate-500 uppercase px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md">Step 1: Inspect</span>
+            </div>
+          </div>
+
+          <!-- MaxScanner & Framer Clean Dropzone -->
+          <div id="dropzone" class="dropzone p-5 text-center cursor-pointer flex flex-col items-center justify-center min-h-[140px] relative group">
+            <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+            <div id="dropzoneEmpty" class="space-y-2 pointer-events-none">
+              <div class="w-10 h-10 mx-auto bg-white text-slate-800 flex items-center justify-center rounded-xl border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
+                <i data-lucide="upload-cloud" class="w-5 h-5 text-slate-700"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-900">Drop an image here, or <span class="text-blue-600 underline underline-offset-2">browse file</span></p>
+                <p class="text-xs text-slate-500 mt-0.5">JPG, PNG, WebP • Direct client-side reading</p>
+              </div>
+            </div>
+            <div id="dropzoneLoaded" class="hidden flex items-center gap-3.5 w-full text-left pointer-events-none">
+              <img id="thumbPreview" class="w-14 h-14 object-cover border border-slate-200 rounded-lg shadow-sm">
+              <div class="overflow-hidden flex-1">
+                <p id="fileName" class="text-sm font-semibold text-slate-900 truncate">image.jpg</p>
+                <p id="fileMeta" class="text-xs font-mono text-slate-500 mt-0.5">3000 × 2000 px</p>
+                <span id="nearestRatioBadge" class="inline-block mt-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200 rounded-full">Properties Extracted</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Source Width & Height Inputs -->
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Source Width</label>
+              <div class="relative">
+                <input type="number" id="srcWidth" value="2400" min="1" step="any" class="w-full bg-white border border-slate-200 px-3 py-2 text-sm font-mono text-slate-900 font-semibold focus:border-slate-900 focus:outline-none transition rounded-lg">
+                <span class="absolute right-2.5 top-2 text-xs text-slate-400 font-mono">px</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Source Height</label>
+              <div class="relative">
+                <input type="number" id="srcHeight" value="3600" min="1" step="any" class="w-full bg-white border border-slate-200 px-3 py-2 text-sm font-mono text-slate-900 font-semibold focus:border-slate-900 focus:outline-none transition rounded-lg">
+                <span class="absolute right-2.5 top-2 text-xs text-slate-400 font-mono">px</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canonical Artwork Ratios (Dark buttons with light text) -->
+          <div class="pt-3 border-t border-slate-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-600">Preset Source Ratios</span>
+              <span id="detectedRatioTag" class="text-[11px] text-slate-400 font-mono">6 Standards</span>
+            </div>
+            <div class="grid grid-cols-6 gap-1.5 text-xs font-mono" id="srcRatioPresetGroup">
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="3000" data-h="2000" data-ratio-name="3:2">3:2</button>
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="2000" data-h="3000" data-ratio-name="2:3">2:3</button>
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="1500" data-h="3000" data-ratio-name="1:2">1:2</button>
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="3000" data-h="1500" data-ratio-name="2:1">2:1</button>
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="1000" data-h="3000" data-ratio-name="1:3">1:3</button>
+              <button type="button" class="src-ratio-preset py-1.5 px-1 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium transition text-center shadow-sm rounded-lg" data-w="3000" data-h="1000" data-ratio-name="3:1">3:1</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Declared Product Frame Card -->
+        <div class="matte-card p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="font-semibold text-slate-900 text-sm tracking-tight flex items-center gap-2">
+              <i data-lucide="frame" class="w-4 h-4 text-slate-700"></i>
+              Declared Target Frame
+            </h2>
+            <span class="text-[11px] font-mono font-medium text-slate-500 uppercase px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md">Step 2: Compare</span>
+          </div>
+
+          <!-- Standard Canonical Ratio Presets (Dark buttons with light text) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-semibold text-slate-600">Standard Catalog Ratios</label>
+              <span id="targetNearestTag" class="text-[11px] text-slate-400 font-mono">Select target frame</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs font-mono" id="decRatioPresetGroup">
+              <button type="button" class="ratio-preset py-2 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="36" data-h="24" data-ratio-name="3:2">3:2 Landscape</button>
+              <button type="button" class="ratio-preset py-2 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="24" data-h="36" data-ratio-name="2:3">2:3 Portrait</button>
+              <button type="button" class="ratio-preset py-2 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="12" data-h="24" data-ratio-name="1:2">1:2 Runner</button>
+              <button type="button" class="ratio-preset py-2 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="24" data-h="12" data-ratio-name="2:1">2:1 Panorama</button>
+              <button type="button" class="ratio-preset py-2 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="12" data-h="36" data-ratio-name="1:3">1:3 Column</button>
+              <button type="button" class="ratio-preset py-2.5 px-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white transition text-center font-medium shadow-sm rounded-lg" data-w="36" data-h="12" data-ratio-name="3:1">3:1 Wide</button>
+            </div>
+          </div>
+
+          <!-- Declared Dimensions -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Declared Width</label>
+              <input type="number" id="decWidth" value="24" min="0.1" step="any" class="w-full bg-white border border-slate-200 px-3 py-2 text-sm font-mono text-slate-900 font-semibold focus:border-slate-900 focus:outline-none transition rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Declared Height</label>
+              <input type="number" id="decHeight" value="36" min="0.1" step="any" class="w-full bg-white border border-slate-200 px-3 py-2 text-sm font-mono text-slate-900 font-semibold focus:border-slate-900 focus:outline-none transition rounded-lg">
+            </div>
+          </div>
+
+          <!-- Custom Frame Dimensions (Mockup) -->
+          <div class="pt-2 border-t border-slate-100">
+            <button id="toggleFrameDims" type="button" class="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 font-medium transition">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>Separate Frame Mockup Dimensions</span>
+            </button>
+            <div id="frameDimsContainer" class="hidden grid grid-cols-2 gap-3 mt-2.5">
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">Frame Width</label>
+                <input type="number" id="frameWidth" placeholder="Default: declared" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 font-mono rounded-lg">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">Frame Height</label>
+                <input type="number" id="frameHeight" placeholder="Default: declared" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 font-mono rounded-lg">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Constraints Card -->
+        <div class="matte-card p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="font-semibold text-slate-900 text-sm tracking-tight flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-slate-700"></i>
+              Quality & Protocol Flags
+            </h2>
+            <span class="text-[11px] font-mono font-medium text-slate-500 uppercase px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md">16 Rules</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Target DPI</label>
+              <input type="number" id="metaDpi" value="300" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-slate-900 font-mono font-semibold text-xs rounded-lg">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Panels ($n\_frames$)</label>
+              <input type="number" id="metaFrames" value="1" min="1" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-slate-900 font-mono font-semibold text-xs rounded-lg">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="font-semibold text-slate-700">Name Match Confidence</span>
+              <span id="confValue" class="text-slate-900 font-mono font-bold">95%</span>
+            </div>
+            <input type="range" id="metaConfidence" min="0" max="100" value="95" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Print URL Ratio</label>
+            <input type="number" id="metaPrintUrlRatio" placeholder="Leave blank if matches source" step="any" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 font-mono rounded-lg">
+          </div>
+
+          <!-- Conditions -->
+          <div class="space-y-2 pt-2 border-t border-slate-100 text-xs">
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagAudit" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>V2 Audit Flagged</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagMissing" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>Source artwork missing in Drive</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagOffCentre" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>Artwork placement off-centre</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagCutComposition" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>Cropping cuts main composition (AI Expand)</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagUnfixable" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>Totally out of proportion / not worth rework</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-slate-700 hover:text-slate-900">
+              <input type="checkbox" id="flagResample" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+              <span>Print resolution needs resampling</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Framing Workbench & Decision Output -->
+      <div class="lg:col-span-7 space-y-5">
+
+        <!-- Precision Framing Canvas Card -->
+        <div class="matte-card p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="font-semibold text-slate-900 text-sm tracking-tight flex items-center gap-2">
+              <i data-lucide="crosshair" class="w-4 h-4 text-slate-700"></i>
+              Framing & Crop Workbench
+            </h2>
+            <div class="flex items-center gap-3 text-xs font-medium text-slate-600">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-xs inline-block"></span> Correct Ratio Box</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-rose-500 rounded-xs inline-block"></span> Out of Ratio (Red)</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 border-2 border-dashed border-amber-500 rounded-xs inline-block"></span> AI Bleed</span>
+            </div>
+          </div>
+
+          <!-- Canvas Container -->
+          <div class="canvas-wrapper p-4 flex items-center justify-center min-h-[380px] relative overflow-hidden">
+            <canvas id="alignmentCanvas" width="580" height="380" class="max-w-full rounded-lg shadow-sm"></canvas>
+            <div id="stretchBadge" class="hidden absolute top-4 left-4 bg-amber-500 text-slate-950 font-bold px-3 py-1 text-xs shadow-sm flex items-center gap-1.5 rounded-full">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+              <span>STRETCH / SQUEEZED MOCKUP</span>
+            </div>
+          </div>
+
+          <!-- MaxScanner Style Dimensions & Ratio Stats Grid -->
+          <div class="grid grid-cols-3 gap-3 font-mono">
+            <div class="bg-slate-50 border border-slate-200/80 p-3 text-center rounded-xl">
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 font-sans font-medium block mb-0.5">Source Delta</span>
+              <span id="metricSrcDelta" class="text-base font-bold text-slate-900">0.6667</span>
+              <span id="metricSrcOrientation" class="text-[11px] text-slate-500 block font-sans font-medium mt-0.5">Portrait</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-200/80 p-3 text-center rounded-xl">
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 font-sans font-medium block mb-0.5">Declared Ratio</span>
+              <span id="metricDecDelta" class="text-base font-bold text-slate-900">0.6667</span>
+              <span id="metricDecOrientation" class="text-[11px] text-slate-500 block font-sans font-medium mt-0.5">Portrait</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-200/80 p-3 text-center rounded-xl">
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 font-sans font-medium block mb-0.5">Mismatch Delta</span>
+              <span id="metricMismatch" class="text-base font-bold text-emerald-700">0.00%</span>
+              <span id="metricSeverity" class="text-[11px] text-emerald-700 font-semibold block font-sans mt-0.5">Aligned</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Protocol Recommendation Card -->
+        <div class="matte-card p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-slate-700"></i>
+              <h2 class="font-semibold text-slate-900 text-sm tracking-tight">Remediation Decision</h2>
+            </div>
+            <span class="text-[11px] font-mono font-medium text-slate-500 uppercase px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md">Single Best Fix</span>
+          </div>
+
+          <!-- Fix Method & Action -->
+          <div class="space-y-3.5">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fix Method:</span>
+              <span id="resFixMethod" class="px-3.5 py-1 text-sm font-bold badge-no-change tracking-wide">
+                NO CHANGE
+              </span>
+            </div>
+
+            <div class="bg-slate-50 p-4 border-l-3 border-[#0F172A] border-y border-r border-slate-200 rounded-r-xl space-y-1.5">
+              <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-700"></i>
+                Recommended Action
+              </div>
+              <p id="resAction" class="text-sm font-semibold text-slate-900 leading-normal">
+                Keep file as-is.
+              </p>
+            </div>
+
+            <div class="space-y-1">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Technical Context</span>
+              <p id="resExplanation" class="text-xs text-slate-600 leading-relaxed font-normal">
+                Declared ratio equals source ratio (Δ = 0%).
+              </p>
+            </div>
+          </div>
+
+          <!-- Structured JSON Output with Dark Copy Button -->
+          <div class="pt-3 border-t border-slate-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-mono font-medium text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="code" class="w-3.5 h-3.5 text-slate-500"></i>
+                Protocol JSON Output
+              </span>
+              <button id="btnCopyJson" class="text-xs text-white font-medium flex items-center gap-1.5 transition px-3 py-1.5 bg-[#0F172A] hover:bg-[#1E293B] shadow-sm rounded-lg">
+                <i data-lucide="copy" class="w-3 h-3 text-slate-300"></i>
+                <span>Copy JSON</span>
+              </button>
+            </div>
+            <pre id="jsonOutput" class="bg-slate-50 p-3.5 border border-slate-200 text-xs font-mono text-slate-800 overflow-x-auto leading-relaxed rounded-xl"></pre>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- BATCH AUDITOR VIEW -->
+    <div id="batchView" class="hidden space-y-5">
+      <div class="matte-card p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-700"></i>
+              Catalog Batch Remediation Auditor
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Automated batch assessment for large artwork collections</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="btnLoadSampleBatch" class="px-3.5 py-1.5 text-xs font-semibold bg-[#0F172A] hover:bg-[#1E293B] text-white transition flex items-center gap-1.5 shadow-sm rounded-lg">
+              <i data-lucide="play" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Load 20 Test Scenarios</span>
+            </button>
+            <button id="btnExportCsv" class="px-3 py-1.5 text-xs font-medium bg-[#0F172A] hover:bg-[#1E293B] text-white transition flex items-center gap-1.5 shadow-sm rounded-lg">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-slate-300"></i>
+              <span>Export CSV</span>
+            </button>
+            <button id="btnExportJson" class="px-3 py-1.5 text-xs font-medium bg-[#0F172A] hover:bg-[#1E293B] text-white transition flex items-center gap-1.5 shadow-sm rounded-lg">
+              <i data-lucide="file-code" class="w-3.5 h-3.5 text-slate-300"></i>
+              <span>Export JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Upload CSV or JSON Catalog File</label>
+            <input type="file" id="batchFileInput" accept=".csv, .json" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#0F172A] file:text-white hover:file:bg-[#1E293B] cursor-pointer bg-slate-50 border border-slate-200 p-1 rounded-lg">
+          </div>
+          <div class="flex items-end">
+            <div class="w-full flex items-center gap-2.5">
+              <div class="flex-1">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Filter by Fix Method</label>
+                <select id="batchFilter" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 font-medium focus:outline-none rounded-lg">
+                  <option value="ALL">All Methods (Show All)</option>
+                  <option value="NO CHANGE">NO CHANGE</option>
+                  <option value="CROP — proportional (centre)">CROP — proportional (centre)</option>
+                  <option value="CROP — horizontal (sides)">CROP — horizontal (sides)</option>
+                  <option value="CROP — vertical (top/bottom)">CROP — vertical (top/bottom)</option>
+                  <option value="EXPAND (AI generative)">EXPAND (AI generative)</option>
+                  <option value="RE-RATIO (change product type)">RE-RATIO</option>
+                  <option value="NEW MOCKUP (image #1)">NEW MOCKUP</option>
+                  <option value="RE-MATCH source">RE-MATCH source</option>
+                  <option value="SET — verify panels">SET — verify panels</option>
+                  <option value="DPI CHECK">DPI CHECK</option>
+                  <option value="DRAFT / REMOVE">DRAFT / REMOVE</option>
+                </select>
+              </div>
+              <button id="btnClearBatch" class="px-3.5 py-1.5 text-xs font-semibold bg-[#7F1D1D] hover:bg-[#991B1B] text-white transition self-end rounded-lg shadow-sm">
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Table -->
+      <div class="matte-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse font-mono">
+            <thead class="bg-slate-50 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200 text-[11px]">
+              <tr>
+                <th class="py-3 px-3.5">#</th>
+                <th class="py-3 px-3.5 font-sans">SKU</th>
+                <th class="py-3 px-3.5">Source (W × H)</th>
+                <th class="py-3 px-3.5">Declared (W × H)</th>
+                <th class="py-3 px-3.5">Δ Ratio</th>
+                <th class="py-3 px-3.5">Mismatch</th>
+                <th class="py-3 px-3.5 font-sans">Fix Method</th>
+                <th class="py-3 px-3.5 font-sans">Recommended Action</th>
+              </tr>
+            </thead>
+            <tbody id="batchTableBody" class="divide-y divide-slate-100 text-slate-900">
+              <tr>
+                <td colspan="8" class="text-center py-10 text-slate-500 font-sans text-xs">
+                  No batch loaded. Click <strong>Load 20 Test Scenarios</strong> or upload a catalog file.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Framer Style Clean Colophon Footer with bold madebyJawadGenix branding -->
+  <footer class="border-t border-slate-200 py-5 bg-white text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-800">Image Alignment & Correction Specialist</span>
+        <span class="text-slate-300">•</span>
+        <span>Version 1.0</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-500">
+        <span>Designed & Engineered by</span>
+        <strong class="text-slate-900 font-bold px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-md">madebyJawadGenix</strong>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="protocolEngine.js"></script>
+  <script src="app.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
+
