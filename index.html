@@ -132,10 +132,16 @@
             </div>
             <div id="dropzoneLoaded" class="hidden flex items-center gap-3.5 w-full text-left pointer-events-none">
               <img id="thumbPreview" class="w-14 h-14 object-cover border border-slate-200 rounded-lg shadow-sm">
-              <div class="overflow-hidden flex-1">
+              <div class="overflow-hidden flex-1 pointer-events-auto">
                 <p id="fileName" class="text-sm font-semibold text-slate-900 truncate">image.jpg</p>
                 <p id="fileMeta" class="text-xs font-mono text-slate-500 mt-0.5">3000 × 2000 px</p>
-                <span id="nearestRatioBadge" class="inline-block mt-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200 rounded-full">Properties Extracted</span>
+                <div class="flex items-center gap-2 flex-wrap mt-1">
+                  <span id="nearestRatioBadge" class="inline-block text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200 rounded-full">Properties Extracted</span>
+                  <button id="btnDpiPill" type="button" class="text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-0.5 border border-blue-200 rounded-full flex items-center gap-1 transition cursor-pointer">
+                    <i data-lucide="gauge" class="w-3 h-3 text-blue-600"></i>
+                    <span id="dpiBadgeText">Check DPI</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -244,7 +250,13 @@
 
           <div class="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label class="block font-semibold text-slate-700 mb-1">Target DPI</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-semibold text-slate-700">Target DPI</label>
+                <button id="btnCheckDpi" type="button" title="Inspect embedded metadata & print DPI" class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition cursor-pointer">
+                  <i data-lucide="gauge" class="w-3 h-3"></i>
+                  <span>Check DPI</span>
+                </button>
+              </div>
               <input type="number" id="metaDpi" value="300" class="w-full bg-white border border-slate-200 px-3 py-1.5 text-slate-900 font-mono font-semibold text-xs rounded-lg">
             </div>
             <div>
@@ -503,6 +515,80 @@
       </div>
     </div>
   </footer>
+
+  <!-- DPI & Print Resolution Diagnostic Modal -->
+  <div id="dpiModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs">
+            <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm tracking-tight">DPI & Print Resolution Inspector</h3>
+            <p class="text-[11px] text-slate-500">Embedded metadata & physical print clarity</p>
+          </div>
+        </div>
+        <button id="btnCloseDpiModal" type="button" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- DPI Comparison Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 font-mono text-center">
+        <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-xl">
+          <span class="text-[10px] uppercase font-sans font-semibold text-slate-500 block mb-1">Embedded File DPI</span>
+          <span id="modalEmbeddedDpi" class="text-xl font-bold text-slate-900">--</span>
+          <span id="modalDpiSource" class="text-[10px] font-sans text-slate-400 block mt-0.5 truncate">Not scanned</span>
+        </div>
+        <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-xl">
+          <span class="text-[10px] uppercase font-sans font-semibold text-slate-500 block mb-1">Effective Print DPI</span>
+          <span id="modalEffectiveDpi" class="text-xl font-bold text-emerald-600">100 DPI</span>
+          <span id="modalPrintDims" class="text-[10px] font-sans text-slate-400 block mt-0.5">at 24" × 36" frame</span>
+        </div>
+      </div>
+
+      <!-- Print Quality Health Assessment Bar -->
+      <div class="bg-slate-50 p-3.5 border border-slate-200 rounded-xl space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-semibold text-slate-700">Print Quality Rating:</span>
+          <span id="modalQualityRating" class="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200 rounded-full text-[11px]">Print Ready (300 DPI)</span>
+        </div>
+        <!-- Progress / Quality Meter -->
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+          <div id="modalDpiBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+        </div>
+        <p id="modalDpiNote" class="text-[11px] text-slate-500 leading-relaxed font-sans">
+          Recommended standard for gallery fine-art prints is 300 DPI.
+        </p>
+      </div>
+
+      <!-- Max Recommended Print Dimensions Box -->
+      <div class="flex items-center justify-between text-xs px-3.5 py-2.5 bg-blue-50/70 border border-blue-200/80 rounded-xl">
+        <div class="flex items-center gap-2 text-blue-900">
+          <i data-lucide="maximize-2" class="w-4 h-4 text-blue-600 shrink-0"></i>
+          <div>
+            <span class="font-semibold block text-[11px]">Max Sharp Print Size (at 300 DPI):</span>
+            <span id="modalMaxPrintSize" class="font-mono font-bold text-blue-800 text-xs">8.0" × 12.0"</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 pt-1">
+        <button id="btnApplyDpiToProtocol" type="button" class="flex-1 py-2 px-3 bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span id="btnApplyDpiText">Apply to Target DPI</span>
+        </button>
+        <button id="btnCloseDpiModalSecondary" type="button" class="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition cursor-pointer">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="protocolEngine.js"></script>

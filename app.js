@@ -40,6 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const flagUnfixable = document.getElementById('flagUnfixable');
   const flagResample = document.getElementById('flagResample');
 
+  // DOM Elements - DPI Inspector & Diagnostics Modal
+  const btnCheckDpi = document.getElementById('btnCheckDpi');
+  const btnDpiPill = document.getElementById('btnDpiPill');
+  const dpiBadgeText = document.getElementById('dpiBadgeText');
+  const dpiModal = document.getElementById('dpiModal');
+  const btnCloseDpiModal = document.getElementById('btnCloseDpiModal');
+  const btnCloseDpiModalSecondary = document.getElementById('btnCloseDpiModalSecondary');
+  const modalEmbeddedDpi = document.getElementById('modalEmbeddedDpi');
+  const modalDpiSource = document.getElementById('modalDpiSource');
+  const modalEffectiveDpi = document.getElementById('modalEffectiveDpi');
+  const modalPrintDims = document.getElementById('modalPrintDims');
+  const modalQualityRating = document.getElementById('modalQualityRating');
+  const modalDpiBar = document.getElementById('modalDpiBar');
+  const modalDpiNote = document.getElementById('modalDpiNote');
+  const modalMaxPrintSize = document.getElementById('modalMaxPrintSize');
+  const btnApplyDpiToProtocol = document.getElementById('btnApplyDpiToProtocol');
+  const btnApplyDpiText = document.getElementById('btnApplyDpiText');
+
+  let detectedEmbeddedDpi = null;
+
   // DOM Elements - Visualizer & Output
   const alignmentCanvas = document.getElementById('alignmentCanvas');
   const ctx = alignmentCanvas.getContext('2d');
@@ -250,7 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
     flagUnfixable.checked = false;
     flagResample.checked = false;
 
-    // Reset Tags
+    // Reset Tags & DPI
+    detectedEmbeddedDpi = null;
+    if (dpiBadgeText) dpiBadgeText.textContent = 'Check DPI';
     if (detectedRatioTag) detectedRatioTag.textContent = '6 Standards';
     if (targetNearestTag) targetNearestTag.textContent = 'Select target frame';
     if (nearestRatioBadge) {
@@ -324,6 +346,18 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please upload an image file (PNG, JPG, WebP, etc.).');
       return;
     }
+
+    // Extract binary DPI from file metadata
+    extractImageDpi(file).then(dpiInfo => {
+      detectedEmbeddedDpi = dpiInfo;
+      if (dpiBadgeText) {
+        if (dpiInfo && dpiInfo.dpi) {
+          dpiBadgeText.textContent = `${dpiInfo.dpi} DPI`;
+        } else {
+          dpiBadgeText.textContent = 'Check DPI';
+        }
+      }
+    });
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -924,6 +958,291 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // ==========================================
+  // DPI EXTRACTION & PRINT RESOLUTION INSPECTOR
+  // ==========================================
+  function extractDpiFromBuffer(buffer) {
+    const view = new DataView(buffer);
+    if (view.byteLength < 8) return null;
+
+    // 1. Check PNG Signature: 89 50 4E 47 0D 0A 1A 0A
+    if (view.getUint8(0) === 0x89 && view.getUint8(1) === 0x50 &&
+        view.getUint8(2) === 0x4E && view.getUint8(3) === 0x47) {
+      let offset = 8;
+      while (offset + 8 <= view.byteLength) {
+        const length = view.getUint32(offset, false);
+        const type = String.fromCharCode(
+          view.getUint8(offset + 4),
+          view.getUint8(offset + 5),
+          view.getUint8(offset + 6),
+          view.getUint8(offset + 7)
+        );
+
+        if (type === 'pHYs' && offset + 8 + 9 <= view.byteLength) {
+          const ppux = view.getUint32(offset + 8, false);
+          const ppuy = view.getUint32(offset + 12, false);
+          const unit = view.getUint8(offset + 16);
+          if (unit === 1 && ppux > 0) {
+            const dpi = Math.round(ppux * 0.0254);
+            return { dpi, x: dpi, y: Math.round(ppuy * 0.0254), source: 'PNG pHYs metadata' };
+          }
+        }
+
+        if (type === 'IEND') break;
+        offset += 12 + length;
+      }
+      return null;
+    }
+
+    // 2. Check JPEG SOI: FF D8
+    if (view.getUint8(0) === 0xFF && view.getUint8(1) === 0xD8) {
+      let offset = 2;
+      let exifDpi = null;
+
+      while (offset + 4 <= view.byteLength) {
+        if (view.getUint8(offset) !== 0xFF) break;
+        const marker = view.getUint8(offset + 1);
+
+        // Stop on SOS (Start of Scan) or EOI (End of Image)
+        if (marker === 0xDA || marker === 0xD9) break;
+
+        const markerLength = view.getUint16(offset + 2, false);
+
+        // APP0: JFIF
+        if (marker === 0xE0 && markerLength >= 14 && offset + 2 + markerLength <= view.byteLength) {
+          const id = String.fromCharCode(
+            view.getUint8(offset + 4),
+            view.getUint8(offset + 5),
+            view.getUint8(offset + 6),
+            view.getUint8(offset + 7),
+            view.getUint8(offset + 8)
+          );
+          if (id === 'JFIF\0') {
+            const unit = view.getUint8(offset + 11);
+            const xDensity = view.getUint16(offset + 12, false);
+            const yDensity = view.getUint16(offset + 14, false);
+
+            let dpi = xDensity;
+            if (unit === 2) {
+              dpi = Math.round(xDensity * 2.54);
+            }
+            if (unit !== 0 && dpi > 0) {
+              return { dpi, x: dpi, y: unit === 2 ? Math.round(yDensity * 2.54) : yDensity, source: 'JPEG JFIF metadata' };
+            }
+          }
+        }
+
+        // APP1: Exif
+        if (marker === 0xE1 && markerLength >= 14 && offset + 2 + markerLength <= view.byteLength) {
+          const id = String.fromCharCode(
+            view.getUint8(offset + 4),
+            view.getUint8(offset + 5),
+            view.getUint8(offset + 6),
+            view.getUint8(offset + 7)
+          );
+          if (id === 'Exif' && view.getUint8(offset + 8) === 0 && view.getUint8(offset + 9) === 0) {
+            const tiffOffset = offset + 10;
+            if (tiffOffset + 8 <= view.byteLength) {
+              const byteOrder = view.getUint16(tiffOffset, false);
+              const littleEndian = byteOrder === 0x4949; // 'II'
+              const tagCheck = view.getUint16(tiffOffset + 2, littleEndian);
+
+              if (tagCheck === 0x002A) {
+                const firstIfd = view.getUint32(tiffOffset + 4, littleEndian);
+                const ifdOffset = tiffOffset + firstIfd;
+
+                if (ifdOffset + 2 <= view.byteLength) {
+                  const numEntries = view.getUint16(ifdOffset, littleEndian);
+                  let xRes = null;
+                  let resUnit = 2; // default: inches
+
+                  for (let i = 0; i < numEntries; i++) {
+                    const entry = ifdOffset + 2 + (i * 12);
+                    if (entry + 12 > view.byteLength) break;
+
+                    const tag = view.getUint16(entry, littleEndian);
+                    const type = view.getUint16(entry + 2, littleEndian);
+
+                    if (tag === 0x011A && type === 5) { // XResolution RATIONAL
+                      const valOffset = tiffOffset + view.getUint32(entry + 8, littleEndian);
+                      if (valOffset + 8 <= view.byteLength) {
+                        const num = view.getUint32(valOffset, littleEndian);
+                        const den = view.getUint32(valOffset + 4, littleEndian);
+                        if (den > 0) xRes = num / den;
+                      }
+                    } else if (tag === 0x0128 && type === 3) { // ResolutionUnit SHORT
+                      resUnit = view.getUint16(entry + 8, littleEndian);
+                    }
+                  }
+
+                  if (xRes && xRes > 0) {
+                    let dpi = Math.round(xRes);
+                    if (resUnit === 3) dpi = Math.round(xRes * 2.54); // cm to inch
+                    exifDpi = { dpi, x: dpi, source: 'JPEG EXIF metadata' };
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        offset += 2 + markerLength;
+      }
+
+      if (exifDpi) return exifDpi;
+    }
+
+    return null;
+  }
+
+  function extractImageDpi(file) {
+    return new Promise((resolve) => {
+      // Read first 128KB which covers header & IFD metadata
+      const slice = file.slice(0, 131072);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const result = extractDpiFromBuffer(e.target.result);
+          resolve(result);
+        } catch (err) {
+          console.warn('DPI header extraction failed:', err);
+          resolve(null);
+        }
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsArrayBuffer(slice);
+    });
+  }
+
+  function updateDpiDiagnostics() {
+    const pxW = parseFloat(srcWidthInput.value) || 0;
+    const pxH = parseFloat(srcHeightInput.value) || 0;
+    const decW = parseFloat(decWidthInput.value) || 0;
+    const decH = parseFloat(decHeightInput.value) || 0;
+
+    // 1. Embedded DPI
+    if (detectedEmbeddedDpi && detectedEmbeddedDpi.dpi) {
+      modalEmbeddedDpi.textContent = `${detectedEmbeddedDpi.dpi} DPI`;
+      modalDpiSource.textContent = detectedEmbeddedDpi.source;
+    } else {
+      modalEmbeddedDpi.textContent = '72 DPI*';
+      modalDpiSource.textContent = 'Web standard (No header embedded)';
+    }
+
+    // 2. Effective Physical Print DPI = Pixel Dimensions / Declared Physical Size in inches
+    let effDpi = 0;
+    if (decW > 0 && decH > 0 && pxW > 0 && pxH > 0) {
+      const effX = Math.round(pxW / decW);
+      const effY = Math.round(pxH / decH);
+      effDpi = Math.min(effX, effY);
+      modalEffectiveDpi.textContent = `${effDpi} DPI`;
+      modalPrintDims.textContent = `at ${decW}" × ${decH}" frame`;
+    } else {
+      modalEffectiveDpi.textContent = '--';
+      modalPrintDims.textContent = 'Frame size missing';
+    }
+
+    // 3. Print Quality Rating & Meter
+    if (effDpi >= 300) {
+      modalQualityRating.textContent = `Gallery Print Ready (${effDpi} DPI)`;
+      modalQualityRating.className = 'font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200 rounded-full text-[11px]';
+      modalDpiBar.style.width = '100%';
+      modalDpiBar.className = 'bg-emerald-500 h-full rounded-full transition-all duration-300';
+      modalDpiNote.textContent = 'Exceeds standard gallery fine-art minimum (300 DPI). Sharp, high-fidelity reproduction with zero pixelation.';
+    } else if (effDpi >= 240) {
+      modalQualityRating.textContent = `High Quality Print (${effDpi} DPI)`;
+      modalQualityRating.className = 'font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 border border-blue-200 rounded-full text-[11px]';
+      modalDpiBar.style.width = `${Math.round((effDpi / 300) * 100)}%`;
+      modalDpiBar.className = 'bg-blue-500 h-full rounded-full transition-all duration-300';
+      modalDpiNote.textContent = 'Excellent sharpness for standard gallery and home viewing distances (240–299 DPI).';
+    } else if (effDpi >= 150) {
+      modalQualityRating.textContent = `Acceptable Commercial (${effDpi} DPI)`;
+      modalQualityRating.className = 'font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 border border-amber-200 rounded-full text-[11px]';
+      modalDpiBar.style.width = `${Math.round((effDpi / 300) * 100)}%`;
+      modalDpiBar.className = 'bg-amber-500 h-full rounded-full transition-all duration-300';
+      modalDpiNote.textContent = 'Passable for large posters viewed from 3+ feet away (150–239 DPI), but fine details may display softness up close.';
+    } else if (effDpi > 0) {
+      modalQualityRating.textContent = `Low Resolution Warning (${effDpi} DPI)`;
+      modalQualityRating.className = 'font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-full text-[11px]';
+      modalDpiBar.style.width = `${Math.max(12, Math.round((effDpi / 300) * 100))}%`;
+      modalDpiBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-300';
+      modalDpiNote.textContent = 'Below commercial print threshold (<150 DPI). Visible pixelation and softness will occur at this frame size.';
+    } else {
+      modalQualityRating.textContent = 'Dimensions Required';
+      modalQualityRating.className = 'font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 border border-slate-200 rounded-full text-[11px]';
+      modalDpiBar.style.width = '0%';
+      modalDpiBar.className = 'bg-slate-300 h-full rounded-full transition-all duration-300';
+      modalDpiNote.textContent = 'Enter source pixel dimensions and declared frame inches to calculate print clarity.';
+    }
+
+    // 4. Max Sharp Print Size at 300 DPI
+    if (pxW > 0 && pxH > 0) {
+      const maxW = (pxW / 300).toFixed(1);
+      const maxH = (pxH / 300).toFixed(1);
+      modalMaxPrintSize.textContent = `${maxW}" × ${maxH}"`;
+    } else {
+      modalMaxPrintSize.textContent = '--';
+    }
+
+    // 5. Update Apply Button text
+    const applyTarget = effDpi > 0 ? effDpi : (detectedEmbeddedDpi?.dpi || 300);
+    if (btnApplyDpiText) {
+      btnApplyDpiText.textContent = `Apply ${applyTarget} DPI to Protocol`;
+    }
+
+    return { effDpi, applyTarget };
+  }
+
+  function openDpiModal() {
+    updateDpiDiagnostics();
+    if (dpiModal) dpiModal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function closeDpiModal() {
+    if (dpiModal) dpiModal.classList.add('hidden');
+  }
+
+  if (btnCheckDpi) btnCheckDpi.addEventListener('click', openDpiModal);
+  if (btnDpiPill) btnDpiPill.addEventListener('click', openDpiModal);
+  if (btnCloseDpiModal) btnCloseDpiModal.addEventListener('click', closeDpiModal);
+  if (btnCloseDpiModalSecondary) btnCloseDpiModalSecondary.addEventListener('click', closeDpiModal);
+
+  // Close modal on backdrop click
+  if (dpiModal) {
+    dpiModal.addEventListener('click', (e) => {
+      if (e.target === dpiModal) closeDpiModal();
+    });
+  }
+
+  // Close modal on Escape
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dpiModal && !dpiModal.classList.contains('hidden')) {
+      closeDpiModal();
+    }
+  });
+
+  // Apply to Protocol button
+  if (btnApplyDpiToProtocol) {
+    btnApplyDpiToProtocol.addEventListener('click', () => {
+      const { applyTarget } = updateDpiDiagnostics();
+      metaDpi.value = applyTarget;
+      evaluateSingle();
+      closeDpiModal();
+
+      // Feedback on btnCheckDpi
+      if (btnCheckDpi) {
+        const orig = btnCheckDpi.innerHTML;
+        btnCheckDpi.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i><span class="text-emerald-700">${applyTarget} DPI Applied</span>`;
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => {
+          btnCheckDpi.innerHTML = orig;
+          if (window.lucide) lucide.createIcons();
+        }, 1500);
+      }
+    });
   }
 
   // Initial Run
